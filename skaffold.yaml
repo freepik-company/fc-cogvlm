@@ -1,0 +1,19 @@
+apiVersion: skaffold/v1beta15
+kind: Config
+metadata:
+  name: congvlm
+
+build:
+  artifacts:
+  - image: cogvlm 
+    custom:
+      buildCommand: |
+        cog build -t $IMAGE
+
+deploy:
+  helm:
+    releases:
+    - name: cogvlm
+      chartPath: chart/cogvlm
+      valuesFiles: 
+        - env/dev

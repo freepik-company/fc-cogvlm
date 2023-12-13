@@ -10,12 +10,12 @@ class Predictor(BasePredictor):
     def predict(
         self,
         image: Path = Input(description="Input image"),
-        query: str = Input(description="Query for given image", default="Describe this image"),
+        query: str = Input(description="Query for the given image", default="Describe this image"),
     ) -> str:
 
         tokenizer = LlamaTokenizer.from_pretrained('lmsys/vicuna-7b-v1.5')
         model = AutoModelForCausalLM.from_pretrained(
-            '/data/',
+            '/src/model_data/',
             torch_dtype=torch.bfloat16,
             low_cpu_mem_usage=True,
             trust_remote_code=True

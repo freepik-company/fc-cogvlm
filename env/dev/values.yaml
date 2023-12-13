@@ -1,0 +1,7 @@
+image:
+  repository: europe-west1-docker.pkg.dev/fc-shared/it-cross/cogvlm-devel
+  tag: 0.3.0
+
+config:
+  modelRepo: https://huggingface.co/THUDM/cogvlm-chat-hf
+  modelLocalDir: /var/models/cogvlm

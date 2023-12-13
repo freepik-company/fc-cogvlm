@@ -1,4 +1,0 @@
-1. Construir la imagen haciendo git del modelo en lugar de descargar todos los ficheros
-2. Probar con skaffold. Con script de construcción con cog.
-3. Verlo funcionando en Kubernetes
-4. Un makefile
