@@ -3,7 +3,7 @@ GIT_BRANCH=$$(git rev-parse --abbrev-ref HEAD)
 IMAGE ?= $(shell yq '.image.repository' env/dev/values.yaml)
 TAG ?= $(shell yq '.image.tag' env/dev/values.yaml)
 
-LOCAL_PORT ?= 5000
+LOCAL_PORT ?= 5001
 CONTAINER_PORT ?= 5000
 
 GPU_DEVICE ?= 0
@@ -13,6 +13,7 @@ MODEL_PATH ?= ./model_data
 
 KUBECONFIG ?= ${HOME}/.kube/config
 NAMESPACE=$(shell echo $(USER)-${GIT_BRANCH} | cut -c 1-63 | tr "_" "-" | tr "/" "-" | tr '[:upper:]' '[:lower:]')
+APP_NAME=$(shell yq '.name' chart/cogvlm/Chart.yaml)
 
 ##
 ## HELP
@@ -26,21 +27,24 @@ help: ## This help
 ## DEV
 ##
 
-build: download_docker_cache ## Build a final image for development
-	IMAGE=${IMAGE}:${TAG} skaffold build --push
+up: ## Deploy in kubernetes
+	KUBECONFIG=${KUBECONFIG} tilt up
 
-dev: download_docker_cache ## Run dev in kubernetes
-	skaffold dev \
-		--kubeconfig ${KUBECONFIG} \
-		-n ${NAMESPACE}
-
-run: download_docker_cache ## Deploy in kuberentes for testing
-	skaffold run \
-		--kubeconfig ${KUBECONFIG} \
-		-n ${NAMESPACE}
+ci: ## Deploy an unattended version of the deployment in kubernetes
+	KUBECONFIG=${KUBECONFIG} tilt ci
 
 down: ## Delete the deployment in kubernetes removing the namespace
-	kubectl delete namespace ${NAMESPACE} --kubeconfig ${KUBECONFIG}
+	KUBECONFIG=${KUBECONFIG} tilt down \
+		--delete-namespaces
+
+port-forward: ## Forward the port of the deployment in kubernetes to the local port
+	kubectl --kubeconfig ${KUBECONFIG} port-forward \
+		--namespace ${NAMESPACE} \
+		$$(kubectl --kubeconfig ${KUBECONFIG} get pods \
+			--namespace ${NAMESPACE} \
+			--selector="app.kubernetes.io/name=${APP_NAME}" \
+			--output jsonpath='{.items[0].metadata.name}') \
+		${LOCAL_PORT}:${CONTAINER_PORT}
 
 ##
 ## LOCAL
