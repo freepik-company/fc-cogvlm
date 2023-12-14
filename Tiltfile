@@ -15,6 +15,7 @@ allow_k8s_contexts('default')
 values = read_yaml('./env/dev/values.yaml')
 image_name = values.get('image').get('repository')
 namespace = str(local("echo $USER-$(git rev-parse --abbrev-ref HEAD) | cut -c 1-63 | tr '_' '-' | tr '/' '-' | tr '[:upper:]' '[:lower:]'", echo_off=True, quiet=True)).strip()
+release_name = "cogvlm-model"
 
 # Download the Docker image cache for COG
 local_resource(
@@ -36,6 +37,24 @@ k8s_resource(new_name='Creating service-account', objects=['chart-cogvlm:Service
 
 # Deploy the COG Helm chart
 k8s_yaml(helm('./chart/cogvlm', values=['./env/dev/values.yaml'], namespace=namespace))
+server_port = local("kubectl get svc chart-cogvlm -n " + namespace + " -o=jsonpath='{.spec.ports[0].nodePort}'", echo_off=True, quiet=True)
 
 # Forward the COG service
-k8s_resource(workload='chart-cogvlm', port_forwards="5001:5000")
+k8s_resource(
+    workload='chart-cogvlm',
+    port_forwards="5001:5000",
+    links=[
+        link('http://95.173.102.51:' + str(server_port).strip(), 'Public URL')
+    ]
+)
+
+
+print("""
+-----------------------------------------------------------------
+
+✨ To access the api, use the IP 95.173.102.51, and the port: """ + str(server_port).strip() + """
+
+http://95.173.102.51:""" + str(server_port).strip() + """
+
+-----------------------------------------------------------------
+""")
