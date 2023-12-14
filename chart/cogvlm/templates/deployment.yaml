@@ -41,7 +41,7 @@ spec:
           args:
             - "/bin/sh"
             - "-c"
-            - "mkdir -p /src; git clone --depth=1 {{ .Values.config.modelRepo }} /src/model_data || (cd /src/model_data; git pull)"
+            - "mkdir -p /src; git clone {{ .Values.config.modelRepo }} /src/model_data 2> /dev/null || (cd /src/model_data; git pull)"
         {{- end }}        
       containers:
         - name: {{ .Chart.Name }}
@@ -53,6 +53,7 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+          # TODO: Dar más tiempo para cuando el modelo se está usando para inferencia
           livenessProbe:
             httpGet:
               path: /
