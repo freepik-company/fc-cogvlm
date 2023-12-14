@@ -26,21 +26,21 @@ help: ## This help
 ## DEV
 ##
 
-build: ## Build a final image for development
+build: download_docker_cache ## Build a final image for development
 	IMAGE=${IMAGE}:${TAG} skaffold build --push
 
-dev: ## Run dev in kubernetes
+dev: download_docker_cache ## Run dev in kubernetes
 	skaffold dev \
 		--kubeconfig ${KUBECONFIG} \
 		-n ${NAMESPACE}
 
-run: ## Deploy in kuberentes for testing
+run: download_docker_cache ## Deploy in kuberentes for testing
 	skaffold run \
 		--kubeconfig ${KUBECONFIG} \
 		-n ${NAMESPACE}
 
-down:
-	kubectl delete namespace ${NAMESPACE}
+down: ## Delete the deployment in kubernetes removing the namespace
+	kubectl delete namespace ${NAMESPACE} --kubeconfig ${KUBECONFIG}
 
 ##
 ## LOCAL
@@ -56,16 +56,18 @@ docker_run: check_tools check_gpu download_model docker_build   ## Run docker lo
 docker_build:  ## Build an image just for running locally
 	cog build -t ${IMAGE}:${TAG}
 
+docker_cache: ## Build an image and push to registry for caching
+	cog push ${IMAGE}:cache
+
 download_model:  ## Clone the git repository of the model
 	git clone --depth=1 ${MODEL_REPO} ${MODEL_PATH} 2> /dev/null || \
 		git --git-dir=${MODEL_PATH}/.git pull
 
+download_docker_cache: ## Download the docker cache image
+	docker pull ${IMAGE}:cache
+
 check_gpu:  ## Check if is available a GPU in the system
 	nvidia-smi > /dev/null
-
-check_tools:  ## Check installed tools
-	echo "TODO: Verficar que tenemos los comandos necesarios en el entorno local y especificar cómo instalarlos... brew, curl, etc.. etc..."
-	#sudo wget https://github.com/mikefarah/yq/releases/download/v4.40.5/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
 
 ##
 ## CLEAN
