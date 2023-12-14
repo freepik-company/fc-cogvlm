@@ -32,20 +32,16 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       initContainers:
-        {{- if .Values.initContainer.enabled }}
+        {{- if eq .Values.initContainer.enabled "true" }}
         - name: {{ include "cogvlm.name" . }}-init
           image: datamachines/git-lfs:latest
           volumeMounts:
-            - name: modelDataPath
+            - name: model-data-volume
               mountPath: "/src/model_data"
-                name: modelDataVolume
           args:
             - "/bin/sh"
             - "-c"
-            - |
-              mkdir -p /src
-              git clone --depth=1 {{ .Values.config.modelRepo }} /src/model_data || (cd /src/model_data; git pull)
-              echo "TODO: reset to commit if given... HEAD if not (no depth then)"
+            - "mkdir -p /src; git clone --depth=1 {{ .Values.config.modelRepo }} /src/model_data || (cd /src/model_data; git pull)"
         {{- end }}        
       containers:
         - name: {{ .Chart.Name }}
@@ -68,12 +64,10 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
-            - name: modelDataPath
+            - name: model-data-volume
               mountPath: "/src/model_data"
-                name: modelDataVolume
-      {{- with .Values.volumes }}
       volumes:
-        - name: modelDataVolume
+        - name: model-data-volume
           hostPath:
             path: {{ .Values.config.modelLocalDir }}
       {{- with .Values.nodeSelector }}
