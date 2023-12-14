@@ -11,7 +11,7 @@ GPU_DEVICE ?= 0
 MODEL_REPO ?= $(shell yq '.config.modelRepo' env/dev/values.yaml)
 MODEL_PATH ?= ./model_data
 
-KUBECONFIG ?= ${HOME}/.kube/config
+KUBECONFIG ?= .kubeconfig
 NAMESPACE=$(shell echo $(USER)-${GIT_BRANCH} | cut -c 1-63 | tr "_" "-" | tr "/" "-" | tr '[:upper:]' '[:lower:]')
 APP_NAME=$(shell yq '.name' chart/cogvlm/Chart.yaml)
 
@@ -22,22 +22,31 @@ APP_NAME=$(shell yq '.name' chart/cogvlm/Chart.yaml)
 help: ## This help
 	@grep -E '^[0-9a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-32s\033[0m %s\n", $$1, $$2}'
 
+#
+# SETUP
+#
+get-kubeconfig: ## Get the kubeconfig from gcloud secrets
+	gcloud secrets versions access 1 --secret=aime-k3s-kubeconfig --project fc-it-cross-sbx-rev1 > .kubeconfig
 
 ##
 ## DEV
 ##
 
 up: ## Deploy in kubernetes
+	[ -f ${KUBECONFIG} ] || make get-kubeconfig
 	KUBECONFIG=${KUBECONFIG} tilt up
 
 ci: ## Deploy an unattended version of the deployment in kubernetes
+	[ -f ${KUBECONFIG} ] || make get-kubeconfig
 	KUBECONFIG=${KUBECONFIG} tilt ci
 
 down: ## Delete the deployment in kubernetes removing the namespace
+	[ -f ${KUBECONFIG} ] || make get-kubeconfig
 	KUBECONFIG=${KUBECONFIG} tilt down \
 		--delete-namespaces
 
 port-forward: ## Forward the port of the deployment in kubernetes to the local port
+	[ -f ${KUBECONFIG} ] || make get-kubeconfig
 	kubectl --kubeconfig ${KUBECONFIG} port-forward \
 		--namespace ${NAMESPACE} \
 		$$(kubectl --kubeconfig ${KUBECONFIG} get pods \
