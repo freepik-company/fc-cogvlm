@@ -1,19 +1,22 @@
-apiVersion: skaffold/v1beta15
+apiVersion: skaffold/v4beta8
 kind: Config
 metadata:
-  name: congvlm
-
+  name: cogvlm
 build:
   artifacts:
-  - image: cogvlm 
-    custom:
-      buildCommand: |
-        cog build -t $IMAGE
-
+    - image: europe-west1-docker.pkg.dev/fc-shared/it-cross/cogvlm-devel 
+      custom:
+        buildCommand: "cog push $IMAGE"
 deploy:
   helm:
     releases:
-    - name: cogvlm
-      chartPath: chart/cogvlm
-      valuesFiles: 
-        - env/dev
+      - name: cogvlm
+        chartPath: chart/cogvlm
+        createNamespace: true
+        valuesFiles:
+          - env/dev/values.yaml
+portForward:
+  - resourceType: service
+    resourceName: cogvlm
+    port: 5000
+    localPort: 5000

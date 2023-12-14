@@ -1,3 +1,5 @@
+GIT_BRANCH=$$(git rev-parse --abbrev-ref HEAD)
+
 IMAGE ?= $(shell yq '.image.repository' env/dev/values.yaml)
 TAG ?= $(shell yq '.image.tag' env/dev/values.yaml)
 
@@ -10,6 +12,7 @@ MODEL_REPO ?= $(shell yq '.config.modelRepo' env/dev/values.yaml)
 MODEL_PATH ?= ./model_data
 
 KUBECONFIG ?= ${HOME}/.kube/config
+NAMESPACE=$(shell echo $(USER)-${GIT_BRANCH} | cut -c 1-63 | tr "_" "-" | tr "/" "-" | tr '[:upper:]' '[:lower:]')
 
 ##
 ## HELP
@@ -27,10 +30,17 @@ build: ## Build a final image for development
 	IMAGE=${IMAGE}:${TAG} skaffold build --push
 
 dev: ## Run dev in kubernetes
-	skaffold dev --kubeconfig ${KUBECONFIG}
+	skaffold dev \
+		--kubeconfig ${KUBECONFIG} \
+		-n ${NAMESPACE}
 
 run: ## Deploy in kuberentes for testing
-	skaffold run --kubeconfig ${KUBECONFIG}
+	skaffold run \
+		--kubeconfig ${KUBECONFIG} \
+		-n ${NAMESPACE}
+
+down:
+	kubectl delete namespace ${NAMESPACE}
 
 ##
 ## LOCAL
