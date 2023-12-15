@@ -11,7 +11,8 @@ GPU_DEVICE ?= 0
 MODEL_REPO ?= $(shell yq '.config.modelRepo' env/dev/values.yaml)
 MODEL_PATH ?= ./model_data
 
-KUBECONFIG ?= .kubeconfig
+KUBECONFIG ?= ~/.kube/config
+CONTEXT ?= aime-k3s
 NAMESPACE=$(shell echo $(USER)-${GIT_BRANCH} | cut -c 1-63 | tr "_" "-" | tr "/" "-" | tr '[:upper:]' '[:lower:]')
 APP_NAME=$(shell yq '.name' chart/cogvlm/Chart.yaml)
 
@@ -25,29 +26,32 @@ help: ## This help
 #
 # SETUP
 #
-get-kubeconfig: ## Get the kubeconfig from gcloud secrets
+get-kubeconfig: ## Get the kubeconfig file from gcloud secrets
 	gcloud secrets versions access 1 --secret=aime-k3s-kubeconfig --project fc-it-cross-sbx-rev1 > .kubeconfig
+	cp ${KUBECONFIG} ${KUBECONFIG}.bkp
+	KUBECONFIG=${KUBECONFIG}:.kubeconfig \
+		kubectl config view --flatten > ${KUBECONFIG}
+	rm .kubeconfig
 
 ##
 ## DEV
 ##
 
 up: ## Deploy in kubernetes
-	[ -f ${KUBECONFIG} ] || make get-kubeconfig
-	KUBECONFIG=${KUBECONFIG} tilt up
+	KUBECONFIG=${KUBECONFIG} tilt --context ${CONTEXT} up && \
+	KUBECONFIG=${KUBECONFIG} tilt --context ${CONTEXT} down \
+		--delete-namespaces
 
 ci: ## Deploy an unattended version of the deployment in kubernetes
-	[ -f ${KUBECONFIG} ] || make get-kubeconfig
-	KUBECONFIG=${KUBECONFIG} tilt ci
+	KUBECONFIG=${KUBECONFIG} tilt --context ${CONTEXT} ci
 
 down: ## Delete the deployment in kubernetes removing the namespace
-	[ -f ${KUBECONFIG} ] || make get-kubeconfig
-	KUBECONFIG=${KUBECONFIG} tilt down \
+	KUBECONFIG=${KUBECONFIG} tilt --context ${CONTEXT} down \
 		--delete-namespaces
 
 port-forward: ## Forward the port of the deployment in kubernetes to the local port
-	[ -f ${KUBECONFIG} ] || make get-kubeconfig
-	kubectl --kubeconfig ${KUBECONFIG} port-forward \
+	kubectl --kubeconfig ${KUBECONFIG} --context ${CONTEXT} \
+		port-forward \
 		--namespace ${NAMESPACE} \
 		$$(kubectl --kubeconfig ${KUBECONFIG} get pods \
 			--namespace ${NAMESPACE} \

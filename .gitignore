@@ -3,4 +3,3 @@ model_data
 *.swp
 .cog
 .idea
-.kubeconfig
