@@ -12,7 +12,7 @@ allow_k8s_contexts('aime-k3s')
 
 # Setup
 values = read_yaml('./env/dev/values.yaml')
-image_name = values.get('image').get('repository')
+image_name = values.get('cog-ai-model').get('image').get('repository')
 namespace = str(local("echo $USER-$(git rev-parse --abbrev-ref HEAD) | cut -c 1-63 | tr '_' '-' | tr '/' '-' | tr '[:upper:]' '[:lower:]'", echo_off=True, quiet=True)).strip()
 release_name = "cogvlm-model"
 
@@ -32,13 +32,13 @@ custom_build(
 # Create the namespace and service account
 namespace_create(namespace)
 k8s_resource(new_name='Creating namespace: ' + namespace, objects=[ namespace+':Namespace:default'])
-k8s_resource(new_name='Creating service-account', objects=['chart-cogvlm:ServiceAccount:'+ namespace])
+k8s_resource(new_name='Creating service-account', objects=['chart-cog-ai-model:ServiceAccount:'+ namespace])
 
 # Deploy the COG Helm chart
 k8s_yaml(helm('./chart/cogvlm', values=['./env/dev/values.yaml'], namespace=namespace))
 
 # Forward the COG service
 k8s_resource(
-    workload='chart-cogvlm',
+    workload='chart-cog-ai-model',
     port_forwards="5001:5000",
 )
