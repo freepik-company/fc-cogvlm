@@ -4,17 +4,17 @@ print("""
    evaluates this file.
 -----------------------------------------------------------------
 """.strip())
-
-load('ext://namespace', 'namespace_create', 'namespace_inject')
+load('ext://helm_remote', 'helm_remote')
 
 # Contexts allowed for this Tiltfile
 allow_k8s_contexts('aime-k3s')
 
 # Setup
 values = read_yaml('./env/dev/values.yaml')
-image_name = values.get('cog-ai-model').get('image').get('repository')
+image_name = values.get('image').get('repository')
+release_name = values.get('name')
 namespace = str(local("echo $USER-$(git rev-parse --abbrev-ref HEAD) | cut -c 1-63 | tr '_' '-' | tr '/' '-' | tr '[:upper:]' '[:lower:]'", echo_off=True, quiet=True)).strip()
-release_name = "cogvlm-model"
+chart_name = "cog-ai-model"
 
 # Download the Docker image cache for COG
 local_resource(
@@ -29,16 +29,23 @@ custom_build(
   deps=['predict.py'],
 )
 
-# Create the namespace and service account
-namespace_create(namespace)
-k8s_resource(new_name='Creating namespace: ' + namespace, objects=[ namespace+':Namespace:default'])
-k8s_resource(new_name='Creating service-account', objects=['chart-cog-ai-model:ServiceAccount:'+ namespace])
 
-# Deploy the COG Helm chart
-k8s_yaml(helm('./chart/cogvlm', values=['./env/dev/values.yaml'], namespace=namespace))
-
-# Forward the COG service
-k8s_resource(
-    workload='chart-cog-ai-model',
-    port_forwards="5001:5000",
+helm_remote(
+    chart_name,
+    repo_url='https://freepik-company.github.io/internal-helm-charts',
+    values=['./env/dev/values.yaml'],
+    release_name=release_name,
+    namespace=namespace,
+    create_namespace=True,
 )
+
+k8s_resource(
+    workload=release_name + '-' + chart_name,
+    port_forwards=port_forward(5001,5000,name='Local Port Forward'),
+    links = [
+        link('http://fobar.com', 'HTTP sandbox Domain'),
+        link('tcp://fobar.com', 'GRPC sandbox Domain')
+    ]
+)
+
+k8s_resource(new_name='Creating service-account', objects=[release_name + '-' + chart_name + ':ServiceAccount:'+ namespace, namespace+':Namespace:default'])

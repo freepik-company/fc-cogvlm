@@ -1,6 +1,0 @@
-dependencies:
-- name: cog-ai-model
-  repository: https://freepik-company.github.io/internal-helm-charts
-  version: 0.3.0
-digest: sha256:f9f230007f550341ff421ed6a14ed79fd3297217e17421c4d00ca1c535086a7a
-generated: "2023-12-15T15:18:18.466877+01:00"

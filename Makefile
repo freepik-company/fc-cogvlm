@@ -63,12 +63,6 @@ port-forward: ## Forward the port of the deployment in kubernetes to the local p
 ## LOCAL
 ##
 
-dependency-build: ## Build the helm dependencies
-	helm dependency build chart/cogvlm
-
-dependency-update: ## Update the helm dependencies
-	helm dependency update chart/cogvlm
-
 docker_run: check_tools check_gpu download_model docker_build   ## Run docker locally
 	docker run --rm \
 		--gpus device=${GPU_DEVICE} \
