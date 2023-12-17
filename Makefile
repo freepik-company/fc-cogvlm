@@ -14,7 +14,7 @@ MODEL_PATH ?= ./model_data
 KUBECONFIG ?= ~/.kube/config
 CONTEXT ?= aime-k3s
 NAMESPACE=$(shell echo $(USER)-${GIT_BRANCH} | cut -c 1-63 | tr "_" "-" | tr "/" "-" | tr '[:upper:]' '[:lower:]')
-APP_NAME=$(shell yq '.name' chart/cogvlm/Chart.yaml)
+APP_NAME=$(shell yq '.name' env/dev/values.yaml)
 
 ##
 ## HELP
@@ -58,6 +58,14 @@ port-forward: ## Forward the port of the deployment in kubernetes to the local p
 			--selector="app.kubernetes.io/name=${APP_NAME}" \
 			--output jsonpath='{.items[0].metadata.name}') \
 		${LOCAL_PORT}:${CONTAINER_PORT}
+
+app:
+	@streamlit run app.py \
+		$$(kubectl --kubeconfig ${KUBECONFIG} --context ${CONTEXT} \
+			get nodes -o jsonpath='{.items[0].status.addresses[0].address}'\
+			):$$(kubectl --kubeconfig ${KUBECONFIG} --context ${CONTEXT} -n ${NAMESPACE} \
+			  get svc ${APP_NAME}-cog-ai-model -o jsonpath='{.spec.ports[0].nodePort}') || \
+			  echo "\nError initializing the app. Ensure that all dependencies are installed.\n\n$$ pip install streamlit requests watchgod\n"
 
 ##
 ## LOCAL
