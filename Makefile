@@ -59,6 +59,9 @@ port-forward: ## Forward the port of the deployment in kubernetes to the local p
 			--output jsonpath='{.items[0].metadata.name}') \
 		${LOCAL_PORT}:${CONTAINER_PORT}
 
+cache: ## Build an image and push to registry for caching
+	cog push ${IMAGE}:cache
+
 app:
 	@streamlit run app.py \
 		$$(kubectl --kubeconfig ${KUBECONFIG} --context ${CONTEXT} \
@@ -80,9 +83,6 @@ docker_run: check_tools check_gpu download_model docker_build   ## Run docker lo
 
 docker_build:  ## Build an image just for running locally
 	cog build -t ${IMAGE}:${TAG}
-
-docker_cache: ## Build an image and push to registry for caching
-	cog push ${IMAGE}:cache
 
 download_model:  ## Clone the git repository of the model
 	git clone --depth=1 ${MODEL_REPO} ${MODEL_PATH} 2> /dev/null || \
