@@ -62,8 +62,10 @@ Application
 
 ## How to use the model
 
-1. Run the model remotely using the makefile target `make up`. This will deploy the model in the k8s server.
-2. Send a request to the model server: You can use curl to send a request to the model server. The request should be a POST request with a JSON body that includes the image and query. The image should be the URL of the image, and the query should be the question you want the model to answer about the image.
+1. Use `make get-kubeconfig` to get the kubeconfig file for the k8s server if you don't have it already. This file is used to interact with the k8s server.
+2. If this model it's going to used by first time you'll need to use `make cache` to create an image for cache the model. This image will be used to cache the model in the first execution.
+3. Run the model remotely using the makefile target `make up`. This will deploy the model in the k8s server.
+4. Send a request to the model server: You can use curl to send a request to the model server. The request should be a POST request with a JSON body that includes the image and query. The image should be the URL of the image, and the query should be the question you want the model to answer about the image.
 
 Here is an example of how you might use curl to send a request to the model server:
 
@@ -73,9 +75,8 @@ curl -X POST -H "Content-Type: application/json" -d '{"input": {"image": "https:
 
 Replace http://localhost:5000/predictions with the actual address and port of your model server.
 
-3. Run the Streamlit app: You can run the Streamlit app using the command `make app`. This starts the app and opens it in your web browser.  
-
-4. Use the Streamlit app: In the Streamlit app, you can enter an image URL and a query, and then click the "Submit" button to send these inputs to the model server. The app then displays the response from the model server.
+5. Run the Streamlit app: You can run the Streamlit app using the command `make app`. This starts the app and opens it in your web browser.
+6. Use the Streamlit app: In the Streamlit app, you can enter an image URL and a query, and then click the "Submit" button to send these inputs to the model server. The app then displays the response from the model server.
 
 ## TODO
 
