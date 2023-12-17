@@ -76,3 +76,7 @@ Replace http://localhost:5000/predictions with the actual address and port of yo
 3. Run the Streamlit app: You can run the Streamlit app using the command `make app`. This starts the app and opens it in your web browser.  
 
 4. Use the Streamlit app: In the Streamlit app, you can enter an image URL and a query, and then click the "Submit" button to send these inputs to the model server. The app then displays the response from the model server.
+
+## TODO
+
+- [ ] Add support for multiple images for the model
