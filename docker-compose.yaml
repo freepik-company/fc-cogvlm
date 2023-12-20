@@ -1,0 +1,10 @@
+# create a docker-compose with a service called streamlit that builds the image from the Dockerfile in the ./app directory, and exposes port 8501 when running:
+version: '3.9'
+services:
+  streamlit:
+    build: ./app
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./app:/app
+

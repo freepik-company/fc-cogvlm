@@ -3,10 +3,12 @@
 # Installation: pip install streamlit requests watchgod
 # Usage: streamlit run app.py IP:PORT
 
+
 import streamlit as st
 import requests
 import sys
 import time
+from streamlit.web.server.websocket_headers import _get_websocket_headers
 
 sb = st.sidebar
 urlContainer = st.sidebar.container()
@@ -14,11 +16,14 @@ imageContainer = st.sidebar.container()
 
 # Get for argument the IP:PORT of the model
 ARG1 = sys.argv[1]
+headers = _get_websocket_headers()
+istio_routing_header = headers.get("Model")
+
 with sb:
     st.caption(f"Using model at {ARG1}")
 
 imageUrl = urlContainer.text_input(
-    'Image URL', 'https://i.imgur.com/3QZ7T4p.jpg',
+    'Image URL', 'https://images-cdn.fantasyflightgames.com/filer_public/14/14/14140f5d-d13f-42b2-b724-cb0308f52bf2/swl22_preview2.jpg',
     key="placeholder",
     help="Enter the URL of the image you want to use"
 )
@@ -39,8 +44,11 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+headers = _get_websocket_headers()
+istio_routing_header = headers.get("Model")
+
 # React to user input
-if prompt := st.chat_input("What is up?"):
+if prompt := st.chat_input("Describe the image"):
     # Display user message in chat message container
     with st.chat_message("user"):
         st.markdown(prompt)
@@ -48,7 +56,11 @@ if prompt := st.chat_input("What is up?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
 
     if imageUrl != "":
-        data = requests.post("http://" + ARG1 + "/predictions", json={"input": {"image": imageUrl, "query": prompt}}).json()
+        data = requests.post(
+            "http://" + ARG1 + "/predictions",
+            json={"input": {"image": imageUrl, "query": prompt}},
+            headers={"model": istio_routing_header}
+        ).json()
 
         if data['output'] == None:
             if data['error'] != None:

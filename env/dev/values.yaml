@@ -10,4 +10,28 @@ resources:
   limits:
     nvidia.com/gpu: 1
 
+service:
+  type: ClusterIP
+
 name: cogvlm-model
+
+apiGateway:
+  enabled: true
+  parentRefs:
+    name: stable-gateway
+    namespace: istio-system
+
+routes:
+  cog-ai-model-cog-ai-extra-rule:
+    rules:
+      - matchesExtra: # Due to implementation constraint only 8 match per rule are allowed
+          - path:
+              type: PathPrefix
+              value: /
+            headers:
+              - type: Exact           # Exact, RegularExpression
+                name: model
+                value: cog_change_me  # This is changed by tilt on the fly
+
+
+# routes.cog-ai-model-cog-ai-extra-rule.rules[0].matchesExtra[0].headers.value="fobarfobar"

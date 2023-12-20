@@ -63,12 +63,8 @@ cache: ## Build an image and push to registry for caching
 	cog push ${IMAGE}:cache
 
 app:
-	@streamlit run app.py \
-		$$(kubectl --kubeconfig ${KUBECONFIG} --context ${CONTEXT} \
-			get nodes -o jsonpath='{.items[0].status.addresses[0].address}'\
-			):$$(kubectl --kubeconfig ${KUBECONFIG} --context ${CONTEXT} -n ${NAMESPACE} \
-			  get svc ${APP_NAME}-cog-ai-model -o jsonpath='{.spec.ports[0].nodePort}') || \
-			  echo "\nError initializing the app. Ensure that all dependencies are installed.\n\n$$ pip install streamlit requests watchgod\n"
+	@streamlit run app.py '95.173.102.51:80' || \
+	  echo "\nError initializing the app. Ensure that all dependencies are installed.\n\n$$ pip install streamlit requests watchgod\n"
 
 ##
 ## LOCAL
